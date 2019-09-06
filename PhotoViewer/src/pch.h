@@ -9,4 +9,13 @@
 
 // add headers that you want to pre-compile here
 
+#include "SDL2/SDL.h"
+#include "SDL2/SDL_image.h"
+#include <memory>
+#include <exception>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <filesystem>
+
 #endif //PCH_H
