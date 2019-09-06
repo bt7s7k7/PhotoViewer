@@ -32,13 +32,29 @@ int main(int argc, char** argv) try {
 			}
 		}
 
+		/// Rendering start -----------------------------------------------------------------------+
 		int width, height;
+		int iWidth, iHeight;
 		sdlhelp::handleSDLError(SDL_GetRendererOutputSize(renderer.get(), &width, &height));
-
 		sdlhelp::handleSDLError(SDL_SetRenderDrawColor(renderer.get(), 0, 0, 0, 255));
 		sdlhelp::handleSDLError(SDL_RenderClear(renderer.get()));
-		SDL_RenderPresent(renderer.get());
 
+		int centerX = width / 2, centerY = height / 2;
+
+		{ /// Draw image --------------------------------------------------------------------------+
+			auto texture = targetFile.getTexture(renderer.get());
+			auto textureData = sdlhelp::queryTexture(texture);
+			iWidth = textureData.w;
+			iHeight = textureData.h;
+
+			SDL_Rect drawRect{centerX - iWidth / 2, centerY - iHeight / 2, iWidth, iHeight};
+
+			sdlhelp::handleSDLError(SDL_RenderCopy(renderer.get(), texture, nullptr, &drawRect));
+		}
+
+		// Rendering end --------------------------------------------------------------------------+
+		SDL_RenderPresent(renderer.get());
+		// Setting the title ----------------------------------------------------------------------+
 		SDL_SetWindowTitle(window.get(), (
 			std::string("PhotoViewer ")
 			+ std::to_string(width)
@@ -47,7 +63,11 @@ int main(int argc, char** argv) try {
 			+ " "
 			+ std::to_string(fpsMeter.fps())
 			+ "FPS :: "
-			+ targetFile.getPath().string().c_str()
+			+ targetFile.getPath().filename().string().c_str()
+			+ " "
+			+ std::to_string(iWidth)
+			+ " x "
+			+ std::to_string(iHeight)
 			).c_str());
 
 		{ // FPS limiting -------------------------------------------------------------------------+
