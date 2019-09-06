@@ -16,7 +16,7 @@ int main(int argc, char** argv) try {
 	fpsMeter_t fpsMeter;
 
 	if (argc >= 2) {
-		targetFile = std::filesystem::path(argv[1]);
+		targetFile = std::filesystem::absolute(std::filesystem::path(argv[1]));
 	} else {
 		targetFile = std::filesystem::path(argv[0]).replace_filename("defaultImage.png");
 	}
@@ -61,13 +61,12 @@ int main(int argc, char** argv) try {
 					auto scroll = (double)event.wheel.y;
 
 					zoom += scroll * zoom * 0.1;
-					if (zoom < 1) zoom = 1;
 				}
 
 				if (event.type == SDL_MOUSEMOTION) {
 					if (SDL_GetMouseState(nullptr, nullptr) && SDL_BUTTON(1)) {
-						offX += event.motion.xrel / (zoom / zoom);
-						offY += event.motion.yrel / (zoom / zoom);
+						offX += event.motion.xrel;
+						offY += event.motion.yrel;
 					}
 				}
 
@@ -89,6 +88,12 @@ int main(int argc, char** argv) try {
 			iWidth = textureData.w;
 			iHeight = textureData.h;
 
+			double zoomLimit = std::min(std::min(
+				1.0 / ((double)iWidth / width),
+				1.0 / ((double)iHeight / height)
+			), 1.0);
+
+			if (zoom < zoomLimit) zoom = zoomLimit;
 
 			double
 				w = iWidth * zoom,
