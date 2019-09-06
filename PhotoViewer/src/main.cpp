@@ -70,6 +70,8 @@ int main(int argc, char** argv) try {
 				if (event.type == SDL_WINDOWEVENT) {
 					if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
 						goto eventLoopExit;
+					} else if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+						resetImageTransform();
 					}
 				}
 
