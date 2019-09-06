@@ -180,11 +180,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\imagedata.h" />
+    <ClInclude Include="src\lib\fpsMeter.h" />
     <ClInclude Include="src\lib\SDLHelper.h" />
     <ClInclude Include="src\pch.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\config.toml" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="assets\defaultImage.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

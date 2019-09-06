@@ -17,5 +17,8 @@
 #include <string>
 #include <unordered_map>
 #include <filesystem>
+#include <chrono>
+#include <array>
+#include <numeric>
 
 #endif //PCH_H

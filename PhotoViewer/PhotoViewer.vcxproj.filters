@@ -29,5 +29,19 @@
     <ClInclude Include="src\lib\SDLHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\imagedata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\fpsMeter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\config.toml" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="assets\defaultImage.png">
+      <Filter>Resource Files</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>
