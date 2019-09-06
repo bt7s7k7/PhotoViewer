@@ -6,8 +6,10 @@
 
 int main(int argc, char** argv) try {
 	sdlhelp::handleSDLError(SDL_Init(SDL_INIT_VIDEO));
+	
+	constexpr int MIN_WINDOW_SIZE = 200;
 
-	auto window = sdlhelp::unique_window_ptr(sdlhelp::handleSDLError(SDL_CreateWindow("PhotoViewer loading...", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 200, 200, SDL_WINDOW_RESIZABLE)));
+	auto window = sdlhelp::unique_window_ptr(sdlhelp::handleSDLError(SDL_CreateWindow("PhotoViewer loading...", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, MIN_WINDOW_SIZE, MIN_WINDOW_SIZE, SDL_WINDOW_RESIZABLE)));
 	auto renderer = sdlhelp::unique_renderer_ptr(sdlhelp::handleSDLError(SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED)));
 
 	imagedata_t targetFile;
@@ -19,6 +21,32 @@ int main(int argc, char** argv) try {
 		targetFile = std::filesystem::path(argv[0]).replace_filename("defaultImage.png");
 	}
 
+	{
+		auto surface = targetFile.getSurface();
+		SDL_SetWindowSize(window.get(), std::max(surface->w, MIN_WINDOW_SIZE), std::max(surface->h, MIN_WINDOW_SIZE));
+	}
+
+	double zoom = 1;
+	double offX = 0, offY = 0;
+
+	auto resetImageTransform = [&]() {
+		auto surface = targetFile.getSurface();
+		int w, h;
+		SDL_GetRendererOutputSize(renderer.get(), &w, &h);
+
+		zoom = 1;
+		offX = 0, offY = 0;
+		if ((surface->w * zoom) > w) {
+			zoom = (double)w / (double)surface->w;
+		}
+
+		if ((surface->h * zoom) > h) {
+			zoom = (double)h / (double)surface->h;
+		}
+	};
+
+	resetImageTransform();
+
 	while (true) {
 		{ // SDL event polling --------------------------------------------------------------------+
 			SDL_Event event;
@@ -26,6 +54,20 @@ int main(int argc, char** argv) try {
 				if (event.type == SDL_WINDOWEVENT) {
 					if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
 						goto eventLoopExit;
+					}
+				}
+
+				if (event.type == SDL_MOUSEWHEEL) {
+					auto scroll = (double)event.wheel.y;
+
+					zoom += scroll * zoom * 0.1;
+					if (zoom < 1) zoom = 1;
+				}
+
+				if (event.type == SDL_MOUSEMOTION) {
+					if (SDL_GetMouseState(nullptr, nullptr) && SDL_BUTTON(1)) {
+						offX += event.motion.xrel / (zoom / zoom);
+						offY += event.motion.yrel / (zoom / zoom);
 					}
 				}
 
@@ -47,7 +89,32 @@ int main(int argc, char** argv) try {
 			iWidth = textureData.w;
 			iHeight = textureData.h;
 
-			SDL_Rect drawRect{centerX - iWidth / 2, centerY - iHeight / 2, iWidth, iHeight};
+
+			double
+				w = iWidth * zoom,
+				h = iHeight * zoom;
+
+			if (w <= width) {
+				offX = 0;
+			} else {
+				offX = std::min(w / 2 - (double)width / 2, std::max(-w / 2 + (double)width / 2, offX));
+			}
+
+			if (h <= height) {
+				offY = 0;
+			} else {
+				offY = std::min(h / 2 - (double)height / 2, std::max(-h / 2 + (double)height / 2, offY));
+			}
+
+			double
+				x = centerX - w / 2 + offX,
+				y = centerY - h / 2 + offY;
+
+			SDL_Rect drawRect{
+				static_cast<int>(std::floor(x)),static_cast<int>(std::floor(y))
+				,static_cast<int>(std::floor(w))
+				,static_cast<int>(std::floor(h))
+			};
 
 			sdlhelp::handleSDLError(SDL_RenderCopy(renderer.get(), texture, nullptr, &drawRect));
 		}
