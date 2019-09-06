@@ -6,8 +6,24 @@
 
 int main(int argc, char** argv) try {
 	sdlhelp::handleSDLError(SDL_Init(SDL_INIT_VIDEO));
-	
+
 	constexpr int MIN_WINDOW_SIZE = 200;
+	static std::unordered_set<std::string> allowedExtensions = {
+		".bmp",
+		".cur",
+		".gif",
+		".ico",
+		".jpg",
+		".lbm",
+		".pcx",
+		".png",
+		".pnm",
+		".tga",
+		".tif",
+		".xcf",
+		".xpm",
+		".xv"
+	};
 
 	auto window = sdlhelp::unique_window_ptr(sdlhelp::handleSDLError(SDL_CreateWindow("PhotoViewer loading...", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, MIN_WINDOW_SIZE, MIN_WINDOW_SIZE, SDL_WINDOW_RESIZABLE)));
 	auto renderer = sdlhelp::unique_renderer_ptr(sdlhelp::handleSDLError(SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED)));
@@ -70,6 +86,41 @@ int main(int argc, char** argv) try {
 					}
 				}
 
+				if (event.type == SDL_KEYDOWN) {
+					if (event.key.keysym.sym == SDLK_LEFT) {
+						std::filesystem::directory_entry last;
+						for (const auto& file : std::filesystem::directory_iterator(targetFile.getPath().parent_path())) {
+							if (file.is_regular_file() && allowedExtensions.find(file.path().extension().string()) != allowedExtensions.end()) {
+								if (file.path() == targetFile.getPath()) {
+									if (last.path().empty()) {
+										break;
+									} else {
+										targetFile = last.path();
+										resetImageTransform();
+										break;
+									}
+								} else {
+									last = file;
+								}
+							}
+						}
+					} else if (event.key.keysym.sym == SDLK_RIGHT) {
+						bool was = false;
+						for (const auto& file : std::filesystem::directory_iterator(targetFile.getPath().parent_path())) {
+							if (file.is_regular_file() && allowedExtensions.find(file.path().extension().string()) != allowedExtensions.end()) {
+								if (file.path() == targetFile.getPath()) {
+									was = true;
+								} else {
+									if (was) {
+										targetFile = file.path();
+										resetImageTransform();
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
