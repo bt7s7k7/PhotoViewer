@@ -147,6 +147,7 @@ int main(int argc, char** argv) try {
 			), 1.0);
 
 			if (zoom < zoomLimit) zoom = zoomLimit;
+			if (zoom > 20) zoom = 20;
 
 			double
 				w = iWidth * zoom,
@@ -173,7 +174,7 @@ int main(int argc, char** argv) try {
 				,static_cast<int>(std::floor(w))
 				,static_cast<int>(std::floor(h))
 			};
-
+			SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, zoom > 1 ? "2" : "0", SDL_HINT_OVERRIDE);
 			sdlhelp::handleSDLError(SDL_RenderCopy(renderer.get(), texture, nullptr, &drawRect));
 		}
 
