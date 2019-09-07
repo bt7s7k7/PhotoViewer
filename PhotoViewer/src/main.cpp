@@ -133,7 +133,7 @@ int APIENTRY WinMain(
 						// We iterate thru the entire folder util we find the target picture, then we load the last one
 						for (const auto& file : std::filesystem::directory_iterator(targetFile.getPath().parent_path())) {
 							// Test if this is a valid file
-							if (file.is_regular_file() && allowedExtensions.find(file.path().extension().string()) != allowedExtensions.end()) {
+							if (file.is_regular_file() && allowedExtensions.find(CharLowerA(const_cast<LPSTR>(file.path().extension().string().c_str()))) != allowedExtensions.end()) {
 								// If file is our target file we load the previous one
 								if (file.path() == targetFile.getPath()) {
 									// If no previous image, give up
@@ -158,7 +158,7 @@ int APIENTRY WinMain(
 						// We iterate thru the target image directory until we find our target image, the we load the one after it
 						for (const auto& file : std::filesystem::directory_iterator(targetFile.getPath().parent_path())) {
 							// Test if the file is a valid image file
-							if (file.is_regular_file() && allowedExtensions.find(file.path().extension().string()) != allowedExtensions.end()) {
+							if (file.is_regular_file() && allowedExtensions.find(CharLowerA(const_cast<LPSTR>(file.path().extension().string().c_str()))) != allowedExtensions.end()) {
 								// If the file is our target file set to load the next one
 								if (file.path() == targetFile.getPath()) {
 									was = true;
