@@ -11,6 +11,7 @@
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
+#include <windows.h>
 #include <memory>
 #include <exception>
 #include <stdexcept>
@@ -21,5 +22,6 @@
 #include <array>
 #include <numeric>
 #include <unordered_set>
+#include <type_traits>
 
 #endif //PCH_H

@@ -3,8 +3,15 @@
 #include "imagedata.h"
 #include "lib/fpsMeter.h"
 #undef main
+#undef max
+#undef min
 
-int main(int argc, char** argv) try {
+int APIENTRY WinMain(
+	_In_ HINSTANCE hInstance,
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPSTR argument,
+	_In_ int nShowCmd
+) try {
 	sdlhelp::handleSDLError(SDL_Init(SDL_INIT_VIDEO));
 
 	// Constants ----------------------------------------------------------------------------------+
@@ -28,18 +35,25 @@ int main(int argc, char** argv) try {
 
 	// Global values ------------------------------------------------------------------------------+
 	sdlhelp::unique_window_ptr window;
+	sdlhelp::unique_renderer_ptr renderer;
 	imagedata_t targetFile;
 	fpsMeter_t fpsMeter;
 	// Image selection ----------------------------------------------------------------------------+
-	if (argc >= 2) {
-		targetFile = std::filesystem::absolute(std::filesystem::path(argv[1]));
+	std::string argumentS = argument;
+	if (argumentS.size() != 0) {
+		if (argumentS[0] == '"') {
+			argumentS = argumentS.substr(1, argumentS.size() - 2);
+		}
+		targetFile = std::filesystem::absolute(std::filesystem::path(argumentS));
 	} else {
-		targetFile = std::filesystem::path(argv[0]).replace_filename("defaultImage.png");
+		auto exePath = std::vector<char>(256);
+		GetModuleFileNameA(nullptr, exePath.data(), exePath.size());
+		targetFile = std::filesystem::path(exePath.data()).replace_filename("defaultImage.png");
 	}
 
 	{ /// Creating the window ---------------------------------------------------------------------+
 		auto surface = targetFile.getSurface();
-		window = sdlhelp::unique_window_ptr(sdlhelp::handleSDLError(SDL_CreateWindow(
+		window.reset(sdlhelp::handleSDLError(SDL_CreateWindow(
 			"PhotoViewer loading...", // Title will be changed automaticaly in update loop
 			SDL_WINDOWPOS_CENTERED, // We want the window position to be centered
 			SDL_WINDOWPOS_CENTERED,
@@ -48,13 +62,13 @@ int main(int argc, char** argv) try {
 			SDL_WINDOW_RESIZABLE // Window should be resizable
 		)));
 	}
-	auto renderer = sdlhelp::unique_renderer_ptr(sdlhelp::handleSDLError(SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED)));
+	renderer.reset(sdlhelp::handleSDLError(SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED)));
 
 
 	/* Pixel size multiplyer */
 	double zoom = 1;
 	/* Horizontal image offset */
-	double offX = 0; 
+	double offX = 0;
 	/* Vertical image offset */
 	double offY = 0;
 	/* Resets the image offset and zoom to fit inside the window, called on image reload */
@@ -73,7 +87,7 @@ int main(int argc, char** argv) try {
 			zoom = (double)h / (double)surface->h;
 		}
 	};
-	
+
 	resetImageTransform();
 
 	while (true) {
@@ -128,7 +142,7 @@ int main(int argc, char** argv) try {
 								}
 							}
 						}
-					// Changind to the next image
+						// Changind to the next image
 					} else if (event.key.keysym.sym == SDLK_RIGHT) {
 						/* If the last image was our target image */
 						bool was = false;
@@ -156,11 +170,11 @@ int main(int argc, char** argv) try {
 
 		/// Rendering start -----------------------------------------------------------------------+
 		/* Window width */
-		int width; 
+		int width;
 		/* Window heigth */
 		int height;
 		/* Image width */
-		int iWidth; 
+		int iWidth;
 		/* Image heigth */
 		int iHeight;
 		// Get window size
@@ -170,7 +184,7 @@ int main(int argc, char** argv) try {
 		// Clear the window
 		sdlhelp::handleSDLError(SDL_RenderClear(renderer.get()));
 		/* Horizontal window center */
-		int centerX = width / 2; 
+		int centerX = width / 2;
 		/* Vertival window center */
 		int centerY = height / 2;
 
@@ -257,7 +271,25 @@ int main(int argc, char** argv) try {
 eventLoopExit: return 0;
 } catch (const std::exception & ex) {
 	// Display the error if any
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "PhotoViewer critical error", ex.what(), nullptr);
+	int button;
+
+	SDL_MessageBoxData data;
+	data.title = "PhotoViewer critical error";
+	data.message = ex.what();
+	data.flags = SDL_MESSAGEBOX_ERROR;
+	data.window = nullptr;
+	data.numbuttons = 2;
+	data.colorScheme = nullptr;
+	SDL_MessageBoxButtonData buttons[] = {
+		{0, 0, "OK"},
+		{0, 1, "Break"}
+	};
+	data.buttons = buttons;
+	SDL_ShowMessageBox(&data, &button);
+
+	if (button == 1) {
+		SDL_TriggerBreakpoint();
+	}
 
 	return 1;
 }
