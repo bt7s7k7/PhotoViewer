@@ -11,6 +11,7 @@
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
+#include "tinyfiledialogs/tinyfiledialogs.h"
 #include <windows.h>
 #include <memory>
 #include <exception>

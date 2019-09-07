@@ -33,6 +33,15 @@ int APIENTRY WinMain(
 		".xv"
 	};
 
+	static auto fileDialogFilterStrings = std::vector<std::string>(allowedExtensions.begin(), allowedExtensions.end());
+	std::transform(fileDialogFilterStrings.begin(), fileDialogFilterStrings.end(), fileDialogFilterStrings.begin(), [](const std::string& v) {
+		return "*" + v;
+	});
+	static auto fileDialogFilterCStrings = std::vector<const char*>(fileDialogFilterStrings.size());
+	std::transform(fileDialogFilterStrings.begin(), fileDialogFilterStrings.end(), fileDialogFilterCStrings.begin(), [](const std::string& v) {
+		return v.c_str();
+	});
+
 	// Global values ------------------------------------------------------------------------------+
 	sdlhelp::unique_window_ptr window;
 	sdlhelp::unique_renderer_ptr renderer;
@@ -161,6 +170,19 @@ int APIENTRY WinMain(
 										break;
 									}
 								}
+							}
+						}
+					} else if (event.key.keysym.sym == SDLK_o) {
+						auto path = tinyfd_openFileDialog(nullptr, targetFile.getPath().string().c_str(), allowedExtensions.size(), fileDialogFilterCStrings.data(), nullptr, 0);
+						if (path != nullptr) {
+							auto lastPath = targetFile.getPath();
+							targetFile = std::filesystem::path(path);
+							try {
+								resetImageTransform();
+							} catch (const sdlhelp::SDLException & ex) {
+								targetFile = lastPath;
+								resetImageTransform();
+								SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Failed to load image", ex.what(), nullptr);
 							}
 						}
 					}
