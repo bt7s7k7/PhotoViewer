@@ -7,6 +7,7 @@
 int main(int argc, char** argv) try {
 	sdlhelp::handleSDLError(SDL_Init(SDL_INIT_VIDEO));
 
+	// Constants ----------------------------------------------------------------------------------+
 	constexpr int MIN_WINDOW_SIZE = 200;
 	static std::unordered_set<std::string> allowedExtensions = {
 		".bmp",
@@ -25,25 +26,37 @@ int main(int argc, char** argv) try {
 		".xv"
 	};
 
-	auto window = sdlhelp::unique_window_ptr(sdlhelp::handleSDLError(SDL_CreateWindow("PhotoViewer loading...", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, MIN_WINDOW_SIZE, MIN_WINDOW_SIZE, SDL_WINDOW_RESIZABLE)));
-	auto renderer = sdlhelp::unique_renderer_ptr(sdlhelp::handleSDLError(SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED)));
-
+	// Global values ------------------------------------------------------------------------------+
+	sdlhelp::unique_window_ptr window;
 	imagedata_t targetFile;
 	fpsMeter_t fpsMeter;
-
+	// Image selection ----------------------------------------------------------------------------+
 	if (argc >= 2) {
 		targetFile = std::filesystem::absolute(std::filesystem::path(argv[1]));
 	} else {
 		targetFile = std::filesystem::path(argv[0]).replace_filename("defaultImage.png");
 	}
 
-	{
+	{ /// Creating the window ---------------------------------------------------------------------+
 		auto surface = targetFile.getSurface();
-		SDL_SetWindowSize(window.get(), std::max(surface->w, MIN_WINDOW_SIZE), std::max(surface->h, MIN_WINDOW_SIZE));
+		window = sdlhelp::unique_window_ptr(sdlhelp::handleSDLError(SDL_CreateWindow(
+			"PhotoViewer loading...", // Title will be changed automaticaly in update loop
+			SDL_WINDOWPOS_CENTERED, // We want the window position to be centered
+			SDL_WINDOWPOS_CENTERED,
+			std::max(surface->w, MIN_WINDOW_SIZE), // Scale window to fit the image
+			std::max(surface->h, MIN_WINDOW_SIZE),
+			SDL_WINDOW_RESIZABLE // Window should be resizable
+		)));
 	}
+	auto renderer = sdlhelp::unique_renderer_ptr(sdlhelp::handleSDLError(SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED)));
 
+
+	/* Pixel size multiplyer */
 	double zoom = 1;
-	double offX = 0, offY = 0;
+	/* Horizontal image offset */
+	double offX = 0; 
+	/* Vertical image offset */
+	double offY = 0;
 
 	auto resetImageTransform = [&]() {
 		auto surface = targetFile.getSurface();
